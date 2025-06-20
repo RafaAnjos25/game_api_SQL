@@ -1,4 +1,4 @@
-#!/home/black-mask/Documents/VSCODE/game_api_sqlachemy/meu_ambiente_virtual/bin/python
+#!/home/archbeats/Documents/VSCODE/game_api_sql/game_api_SQL/meu_ambiente_virtual/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

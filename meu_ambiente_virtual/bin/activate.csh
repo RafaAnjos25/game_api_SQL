@@ -9,17 +9,17 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
-setenv VIRTUAL_ENV /home/black-mask/Documents/VSCODE/game_api_sqlachemy/meu_ambiente_virtual
+setenv VIRTUAL_ENV /home/archbeats/Documents/VSCODE/game_api_sql/game_api_SQL/meu_ambiente_virtual
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/"bin":$PATH"
+setenv VIRTUAL_ENV_PROMPT meu_ambiente_virtual
 
 
 set _OLD_VIRTUAL_PROMPT="$prompt"
 
 if (! "$?VIRTUAL_ENV_DISABLE_PROMPT") then
-    set prompt = '(meu_ambiente_virtual) '"$prompt"
-    setenv VIRTUAL_ENV_PROMPT '(meu_ambiente_virtual) '
+    set prompt = "("meu_ambiente_virtual") $prompt:q"
 endif
 
 alias pydoc python -m pydoc

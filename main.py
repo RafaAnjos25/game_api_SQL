@@ -1,12 +1,53 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
+from flask_login import LoginManager, login_user, login_required, logout_user
 from db import db
 from models import Usuario
-import os
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
+app.secret_key = 'espectro'
+lm = LoginManager(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///dados.db"
 db.init_app(app)
+
+@lm.user_loader
+def user_loader(id):
+    usuario = db.session.query(Usuario).filter_by(id=id).first()
+    return usuario
+
+@app.route('/login', methods=['Post'])
+def login():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"ERROR": "Nenhum dado enviado"}), 400
+
+    campos_requeridos = ["nome", "senha"]
+    for campos in campos_requeridos:
+        if campos not in data:
+            return jsonify({"ERROR": f"Campo obrigatório ausente: {campos}"}), 400
+
+    try:
+        nome=data["nome"]
+        senha=data["senha"]
+
+        usuario = db.session.query(Usuario).filter_by(nome=nome, senha=senha).first()
+        if not usuario:
+            return jsonify({"ERROR": "Nome ou senha incorretos"}), 400
+
+        login_user(usuario)
+        return jsonify({"message": "Usuario logado com sucesso"})
+    except Exception as e:
+        return jsonify({"ERROR": str(e)}), 400
+    
+@app.route('/logout', methods=['Post'])
+@login_required
+def logout():
+    try:
+        logout_user()
+        return jsonify({"message": "Usuario deslogado com sucesso"})
+    except Exception as e:
+        return jsonify({"ERROR": str(e)}), 400
 
 @app.route('/registrar', methods=["Post"])
 def registrar():
@@ -27,11 +68,13 @@ def registrar():
             senha=data["senha"])
         db.session.add(novo_usuario)
         db.session.commit()
+        login_user(novo_usuario)
         return jsonify({"message": "Usuário cadastrado com sucesso"}), 201
     except Exception as e:
         return jsonify({"ERROR": str(e)}), 400
     
 @app.route('/editar/<int:id>', methods=["PUT"])
+@login_required
 def editar(id):
     try:
         editar_usuario = db.session.query(Usuario).filter_by(id=id).first()  
@@ -53,6 +96,7 @@ def editar(id):
         return jsonify({"ERROR": str(e)}), 400
 
 @app.route('/deletar', methods=["Delete"])
+@login_required
 def deletar():
     data = request.get_json()
     if not data:
@@ -67,6 +111,7 @@ def deletar():
         return jsonify({"ERROR": str(e)}), 400
 
 @app.route('/obter', methods=["GET"])
+@login_required
 def obter():
         data = request.get_json()
         if not data:
