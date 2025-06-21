@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user
+import hashlib
 from db import db
 from models import Usuario
 from sqlalchemy import create_engine
@@ -9,6 +10,10 @@ app.secret_key = 'espectro'
 lm = LoginManager(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///dados.db"
 db.init_app(app)
+
+def hash(txt):
+    hash_obj = hashlib.sha256(txt.encode('utf-8'))
+    return hash_obj.hexdigest()
 
 @lm.user_loader
 def user_loader(id):
@@ -31,12 +36,12 @@ def login():
         nome=data["nome"]
         senha=data["senha"]
 
-        usuario = db.session.query(Usuario).filter_by(nome=nome, senha=senha).first()
+        usuario = db.session.query(Usuario).filter_by(nome=nome, senha=hash(senha)).first()
         if not usuario:
             return jsonify({"ERROR": "Nome ou senha incorretos"}), 400
 
         login_user(usuario)
-        return jsonify({"message": "Usuario logado com sucesso"})
+        return jsonify({"message": f"Olá {nome}, seja bem vindo"})
     except Exception as e:
         return jsonify({"ERROR": str(e)}), 400
     
@@ -45,7 +50,7 @@ def login():
 def logout():
     try:
         logout_user()
-        return jsonify({"message": "Usuario deslogado com sucesso"})
+        return jsonify({"message": "Usuário deslogado com sucesso"})
     except Exception as e:
         return jsonify({"ERROR": str(e)}), 400
 
@@ -65,7 +70,7 @@ def registrar():
         novo_usuario = Usuario(
             nome=data["nome"], 
             email=data["email"],
-            senha=data["senha"])
+            senha=hash(data["senha"]))
         db.session.add(novo_usuario)
         db.session.commit()
         login_user(novo_usuario)
