@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user
 import hashlib
 from db import db
-from models import Usuario
+from models import Usuario, Ranking
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
@@ -71,7 +71,11 @@ def registrar():
             nome=data["nome"], 
             email=data["email"],
             senha=hash(data["senha"]))
+        novo_ranking = Ranking(
+            nome=data["nome"]
+        )
         db.session.add(novo_usuario)
+        db.session.add(novo_ranking)
         db.session.commit()
         login_user(novo_usuario)
         return jsonify({"message": "Usuário cadastrado com sucesso"}), 201
@@ -82,7 +86,8 @@ def registrar():
 @login_required
 def editar(id):
     try:
-        editar_usuario = db.session.query(Usuario).filter_by(id=id).first()  
+        editar_usuario = db.session.query(Usuario).filter_by(id=id).first()
+        ran_editar_usuario = db.session.query(Ranking).filter_by(id=id).first()
         data = request.get_json()
 
         if not data:
@@ -92,9 +97,10 @@ def editar(id):
         if editar_usuario.query.filter_by(email=data["email"]).first():
             return jsonify({"ERROR": "Email já cadastrado"}), 400
 
+        ran_editar_usuario.nome=data["nome"]
         editar_usuario.nome=data["nome"]
         editar_usuario.email=data["email"]
-        editar_usuario.senha=data["senha"]       
+        editar_usuario.senha=hash(data["senha"])       
         db.session.commit()
         return jsonify({"message": "Usuário atualizado com sucesso"}), 201
     except Exception as e:
@@ -109,7 +115,9 @@ def deletar():
     
     try:
         deletar_usuario = db.session.execute(db.select(Usuario).filter_by(id=data["id"])).scalar_one()
+        rank_deletar_usuario = db.session.execute(db.select(Ranking).filter_by(id=data["id"])).scalar_one()
         db.session.delete(deletar_usuario)
+        db.session.delete(rank_deletar_usuario)
         db.session.commit()
         return jsonify({"message": "Usuário deletado com sucesso"}), 201
     except Exception as e:
@@ -134,6 +142,23 @@ def obter():
             except Exception as e:
                 return jsonify({"ERROR": "Usuário não encontrado"}), 404
         
+@app.route('/conquista', methods=['PUT'])
+@login_required
+def tempo_conquista():
+    data = request.get_json()
+    if not data:
+        return jsonify({"ERROR": "Nenhum dado enviado"})
+    
+    tempo = data["tempo"]
+    if tempo <= 1:
+        return jsonify({"Conquista desbloqueada": "Mister Sonico - terminou em um minuto ou menos"})
+    elif tempo > 1 and data["tempo"] <= 5:
+        return jsonify({"Conquista desbloqueada": "Uno de escada - terminou entre 1 e 5 minutos"})
+    elif tempo > 10:
+        return jsonify({"Conquista desbloqueada": "Tartaruga sem perna - terminou em mais de 10 minutos"})
+    else:
+        return jsonify({"message": "Terminou"})
+            
 
 if __name__ == '__main__':
     with app.app_context():
