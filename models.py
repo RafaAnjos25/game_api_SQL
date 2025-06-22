@@ -11,7 +11,7 @@ class Usuario(UserMixin, db.Model):
     senha = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
-        return f"<{self.nome}"
+        return f"<{self.nome}>"
 
 class Ranking(db.Model):
     __tablename__ = 'Ranking'
@@ -21,7 +21,7 @@ class Ranking(db.Model):
     nome_usuario = relationship("Usuario", foreign_keys=[nome])
 
     def __repr__(self):
-        return f"<{self.nome}"
+        return f"<{self.nome}>"
     
 class Conquistas(db.Model):
     __tablename__ ='Conquistas'

@@ -3,7 +3,6 @@ from flask_login import LoginManager, login_user, login_required, logout_user
 import hashlib
 from db import db
 from models import Usuario, Ranking, Conquistas
-from sqlalchemy import create_engine
 
 app = Flask(__name__)
 app.secret_key = 'espectro'
@@ -41,7 +40,7 @@ def login():
             return jsonify({"ERROR": "Nome ou senha incorretos"}), 400
 
         login_user(usuario)
-        return jsonify({"message": f"Olá {nome}, seja bem vindo"})
+        return jsonify({"message": f"Olá {nome}, seja bem vindo"}),200
     except Exception as e:
         return jsonify({"ERROR": str(e)}), 400
     
@@ -50,7 +49,7 @@ def login():
 def logout():
     try:
         logout_user()
-        return jsonify({"message": "Usuário deslogado com sucesso"})
+        return jsonify({"message": "Usuário deslogado com sucesso"}),200
     except Exception as e:
         return jsonify({"ERROR": str(e)}), 400
 
@@ -210,7 +209,7 @@ def obter_ranking():
     if not data: 
         try:
             ranking = db.session.execute(db.select(Ranking).filter(Ranking.tempo!=None).order_by(Ranking.tempo)).scalars()
-            resultado = [{'Posicao': i, 'nome': rank.nome, 'tempo': rank.tempo} for i, rank in enumerate(ranking, start=1) if rank.tempo is not None]    
+            resultado = [{'Posicao': i, 'nome': rank.nome, 'tempo': rank.tempo} for i, rank in enumerate(ranking, start=1)]    
             return jsonify(resultado),200
         except Exception as e:
             return jsonify({"ERROR": str(e)}), 400
