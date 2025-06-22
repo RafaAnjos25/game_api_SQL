@@ -203,6 +203,28 @@ def registrar_tempo(id):
         except Exception as e:
             return jsonify({"ERROR": str(e)}), 400    
 
+@app.route('/ranking', methods=["GET"])
+@login_required
+def obter_ranking():
+    data = request.get_json()
+    if not data: 
+        try:
+            ranking = db.session.execute(db.select(Ranking).filter(Ranking.tempo!=None).order_by(Ranking.tempo)).scalars()
+            resultado = [{'Posicao': i, 'nome': rank.nome, 'tempo': rank.tempo} for i, rank in enumerate(ranking, start=1) if rank.tempo is not None]    
+            return jsonify(resultado),200
+        except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400
+    else:
+        try:
+            id_rank = data["id"]
+            ranking = db.session.execute(db.select(Ranking).filter(Ranking.tempo!=None).order_by(Ranking.tempo)).scalars()
+            for i, rank in enumerate(ranking, start=1):
+                if rank.id == id_rank:
+                    return jsonify ({'Posicao': i, 'nome': rank.nome, 'tempo': rank.tempo})        
+            return jsonify({"ERROR": "Usuario não encontrado ou sem tempo"}), 404
+        except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400
+            
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
