@@ -164,27 +164,7 @@ def registrar_tempo(id):
         except Exception as e:
             return jsonify({"ERROR": str(e)}), 400
       
-    if tempo_antigo.tempo is None:
-        try:
-            tempo_antigo.tempo = data["tempo"]
-            db.session.commit()
-            if tempo_novo <= 1.00  and conquista.Conquista_1_minuto == False:
-                conquista.Conquista_1_minuto = True
-                db.session.commit()
-                return jsonify({"Conquista desbloqueada": "Mister Sonico - terminou em um minuto ou menos"})
-            elif tempo_novo > 1.00 and tempo_novo <= 5.00 and conquista.Conquista_5_minuto == False:
-                conquista.Conquista_5_minuto = True
-                db.session.commit()
-                return jsonify({"Conquista desbloqueada": "Uno de escada - terminou entre 1 e 5 minutos"})
-            elif tempo_novo > 10.00 and conquista.Conquista_10_minuto == False:
-                conquista.Conquista_10_minuto = True
-                db.session.commit()
-                return jsonify({"Conquista desbloqueada": "Tartaruga sem perna - terminou em mais de 10 minutos"})
-            else:
-                return jsonify({"message": "Terminou"})
-        except Exception as e:
-            return jsonify({"ERROR": str(e)}), 400
-    elif tempo_novo < tempo_antigo.tempo:
+    if tempo_antigo.tempo is None or tempo_novo < tempo_antigo.tempo:
         try:
             tempo_antigo.tempo = data["tempo"]
             db.session.commit()
