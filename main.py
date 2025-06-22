@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user
 import hashlib
 from db import db
-from models import Usuario, Ranking
+from models import Usuario, Ranking, Conquistas
 from sqlalchemy import create_engine
 
 app = Flask(__name__)
@@ -74,8 +74,12 @@ def registrar():
         novo_ranking = Ranking(
             nome=data["nome"]
         )
+        novo_conquista = Conquistas(
+            nome=data["nome"]
+        )   
         db.session.add(novo_usuario)
         db.session.add(novo_ranking)
+        db.session.add(novo_conquista)
         db.session.commit()
         login_user(novo_usuario)
         return jsonify({"message": "Usuário cadastrado com sucesso"}), 201
@@ -88,6 +92,7 @@ def editar(id):
     try:
         editar_usuario = db.session.query(Usuario).filter_by(id=id).first()
         ran_editar_usuario = db.session.query(Ranking).filter_by(id=id).first()
+        con_editar_usuario = db.session.query(Conquistas).filter_by(id=id).first()
         data = request.get_json()
 
         if not data:
@@ -98,6 +103,7 @@ def editar(id):
             return jsonify({"ERROR": "Email já cadastrado"}), 400
 
         ran_editar_usuario.nome=data["nome"]
+        con_editar_usuario.nome=data["nome"]
         editar_usuario.nome=data["nome"]
         editar_usuario.email=data["email"]
         editar_usuario.senha=hash(data["senha"])       
@@ -116,8 +122,10 @@ def deletar():
     try:
         deletar_usuario = db.session.execute(db.select(Usuario).filter_by(id=data["id"])).scalar_one()
         rank_deletar_usuario = db.session.execute(db.select(Ranking).filter_by(id=data["id"])).scalar_one()
+        conq_deletar_usuario = db.session.execute(db.select(Conquistas).filter_by(id=data["id"])).scalar_one()
         db.session.delete(deletar_usuario)
         db.session.delete(rank_deletar_usuario)
+        db.session.delete(conq_deletar_usuario)
         db.session.commit()
         return jsonify({"message": "Usuário deletado com sucesso"}), 201
     except Exception as e:
@@ -133,7 +141,7 @@ def obter():
                 resultado = [{'nome': usuario.nome, 'email': usuario.email} for usuario in usuarios]
                 return jsonify(resultado),200
             except Exception as e:
-                return jsonify({"ERROR": str(e)}), 500
+                return jsonify({"ERROR": str(e)}), 400
         else:
             try:
                 usuarios = db.session.execute(db.select(Usuario).filter_by(id=data["id"])).scalar_one()
@@ -142,23 +150,78 @@ def obter():
             except Exception as e:
                 return jsonify({"ERROR": "Usuário não encontrado"}), 404
         
-@app.route('/conquista', methods=['PUT'])
+@app.route('/tempo/<int:id>', methods=['PUT'])
 @login_required
-def tempo_conquista():
+def registrar_tempo(id):
     data = request.get_json()
+    tempo_novo = data["tempo"]
+    tempo_antigo = db.session.query(Ranking).filter_by(id=id).first()
+    conquista = db.session.query(Conquistas).filter_by(id=id).first()
+
     if not data:
-        return jsonify({"ERROR": "Nenhum dado enviado"})
-    
-    tempo = data["tempo"]
-    if tempo <= 1:
-        return jsonify({"Conquista desbloqueada": "Mister Sonico - terminou em um minuto ou menos"})
-    elif tempo > 1 and data["tempo"] <= 5:
-        return jsonify({"Conquista desbloqueada": "Uno de escada - terminou entre 1 e 5 minutos"})
-    elif tempo > 10:
-        return jsonify({"Conquista desbloqueada": "Tartaruga sem perna - terminou em mais de 10 minutos"})
+        try:
+            return jsonify({"ERROR": "Nenhum dado enviado"})
+        except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400
+      
+    if tempo_antigo.tempo is None:
+        try:
+            tempo_antigo.tempo = data["tempo"]
+            db.session.commit()
+            if tempo_novo <= 1.00  and conquista.Conquista_1_minuto == False:
+                conquista.Conquista_1_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Mister Sonico - terminou em um minuto ou menos"})
+            elif tempo_novo > 1.00 and tempo_novo <= 5.00 and conquista.Conquista_5_minuto == False:
+                conquista.Conquista_5_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Uno de escada - terminou entre 1 e 5 minutos"})
+            elif tempo_novo > 10.00 and conquista.Conquista_10_minuto == False:
+                conquista.Conquista_10_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Tartaruga sem perna - terminou em mais de 10 minutos"})
+            else:
+                return jsonify({"message": "Terminou"})
+        except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400
+    elif tempo_novo < tempo_antigo.tempo:
+        try:
+            tempo_antigo.tempo = data["tempo"]
+            db.session.commit()
+            if tempo_novo <= 1.00  and conquista.Conquista_1_minuto == False:
+                conquista.Conquista_1_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Mister Sonico - terminou em um minuto ou menos"})
+            elif tempo_novo > 1.00 and tempo_novo <= 5.00 and conquista.Conquista_5_minuto == False:
+                conquista.Conquista_5_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Uno de escada - terminou entre 1 e 5 minutos"})
+            elif tempo_novo > 10.00 and conquista.Conquista_10_minuto == False:
+                conquista.Conquista_10_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Tartaruga sem perna - terminou em mais de 10 minutos"})
+            else:
+                return jsonify({"message": "Terminou"})
+        except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400
     else:
-        return jsonify({"message": "Terminou"})
-            
+        try:
+            if tempo_novo <= 1.00  and conquista.Conquista_1_minuto == False:
+                conquista.Conquista_1_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Mister Sonico - terminou em um minuto ou menos"})
+            elif tempo_novo > 1.00 and tempo_novo <= 5.00 and conquista.Conquista_5_minuto == False:
+                conquista.Conquista_5_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Uno de escada - terminou entre 1 e 5 minutos"})
+            elif tempo_novo > 10.00 and conquista.Conquista_10_minuto == False:
+                conquista.Conquista_10_minuto = True
+                db.session.commit()
+                return jsonify({"Conquista desbloqueada": "Tartaruga sem perna - terminou em mais de 10 minutos"})
+            else:
+                return jsonify({"message": "Terminou"})
+        except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400    
 
 if __name__ == '__main__':
     with app.app_context():

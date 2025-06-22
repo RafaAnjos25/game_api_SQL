@@ -23,4 +23,12 @@ class Ranking(db.Model):
     def __repr__(self):
         return f"<{self.nome}"
     
-         
+class Conquistas(db.Model):
+    __tablename__ ='Conquistas'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(40), ForeignKey("Usuarios.nome", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    Conquista_1_minuto = db.Column(db.Boolean, default=False, nullable=False)
+    Conquista_5_minuto = db.Column(db.Boolean, default=False, nullable=False)
+    Conquista_10_minuto = db.Column(db.Boolean, default=False, nullable=False)
+    nome_user = relationship("Usuario", foreign_keys=[nome])
+
