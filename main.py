@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import json
 from flask_login import LoginManager, login_user, login_required, logout_user
 import hashlib
 from db import db
@@ -200,7 +201,25 @@ def registrar_tempo(id):
             else:
                 return jsonify({"message": "Terminou"})
         except Exception as e:
-            return jsonify({"ERROR": str(e)}), 400    
+            return jsonify({"ERROR": str(e)}), 400 
+
+@app.route('/conquistas', methods=["GET"])   
+@login_required
+def obter_conquistas():
+    data = request.get_json()
+    if not data:
+        try:
+            return jsonify({"ERROR": "Nenhum dado enviado"})
+        except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400
+    
+    try:
+        conquistas = db.session.execute(db.select(Conquistas).filter_by(id=data["id"])).scalar_one()
+        resultado = {'Conquista 1 minuto': conquistas.Conquista_1_minuto, 'Conquista 5 minutos': conquistas.Conquista_5_minuto, 'Conquista 10 minutos': conquistas.Conquista_10_minuto}
+        return jsonify(resultado), 200
+    except Exception as e:
+            return jsonify({"ERROR": str(e)}), 400
+
 
 @app.route('/ranking', methods=["GET"])
 @login_required
@@ -219,7 +238,7 @@ def obter_ranking():
             ranking = db.session.execute(db.select(Ranking).filter(Ranking.tempo!=None).order_by(Ranking.tempo)).scalars()
             for i, rank in enumerate(ranking, start=1):
                 if rank.id == id_rank:
-                    return jsonify ({'Posicao': i, 'nome': rank.nome, 'tempo': rank.tempo})        
+                    return jsonify ({'Posicao': i, 'nome': rank.nome, 'tempo': rank.tempo}),200        
             return jsonify({"ERROR": "Usuario não encontrado ou sem tempo"}), 404
         except Exception as e:
             return jsonify({"ERROR": str(e)}), 400
